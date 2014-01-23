@@ -38,9 +38,14 @@ fourcc = cv2.cv.CV_FOURCC('M', 'J', 'P', 'G')
 current_frame = 0
 current_segment = 1
 
+
 class VideoFifo(object):
 	def __init__(self):
 		pass
+
+# Create directory if does not exist
+if not os.path.exists(DASHCAM_VIDEO_DIR):
+    os.makedirs(DASHCAM_VIDEO_DIR)
 
 def get_oldest_video_file():
 	dirpath = DASHCAM_VIDEO_DIR
@@ -81,6 +86,7 @@ def get_video_filename():
 out = cv2.VideoWriter(get_video_filename(), fourcc, 60, (1280,720),True)
 
 Log("!", "Started DashPiCam")
+os.system("aplay -q ./audio/Recording_Mode.wav")
 while True:
 	ret, frame = cap.read()
 
@@ -93,15 +99,14 @@ while True:
 				out.write(frame)
 		else:
 			Log("!", "Finish segment. Start a new one")
-
+			
 			# Check for videos disk space
 			if get_size() >= DASHCAM_VIDEO_DIR_SIZE_LIMIT:
 				oldest_video_file = get_oldest_video_file()
 				if oldest_video_file is not None:
-					Log("!", "Videos folder reach the limit. Remove %s" % os.path.abspath(oldest_video_file)
-					# Delete this file
-					os.remove(os.path.abspath(oldest_video_file))
-
+					Log("!", "Videos folder reach the limit. Remove %s" % os.path.abspath(oldest_video_file))
+					os.remove(oldest_video_file)
+			
 			current_segment += 1
 			current_frame = 0
 
@@ -114,6 +119,18 @@ while True:
 
 	# show frame in window
 	cv2.imshow(DASHCAM_WINDOW_NAME, frame)
+
+	# Detect face in frame
+#	face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+#	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+#	faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+
+#	if faces is not None:
+#		for (x,y,w,h) in faces:
+#			os.system('echo foundface')
+#			cv2.rectangle(frame, (x,y), (x+w,y+h), (255,0,0),2)
+#			roi_gray = gray[y:y+h, x:x+w]
+#			roi_color = frame[y:y+h, x:x+w]
 	
 	if cv2.waitKey(1) & 0xFF == ord('q'):
 	        break
